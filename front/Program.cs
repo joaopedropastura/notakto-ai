@@ -1,9 +1,15 @@
+using System.IO;
+using System.Linq;
 using System.Drawing;
 using System.Collections.Generic;
 
 using Pamella;
 
-App.Open<NotaktoView>();
+App.Open(new NotaktoView
+{
+    Model1 = args.Length > 0 ? args[0] : "m1.txt",
+    Model2 = args.Length > 1 ? args[1] : "m2.txt"
+});
 
 public class Notakto
 {
@@ -20,8 +26,12 @@ public class Notakto
 
 public class NotaktoView : View
 {
+    public string Model1 { get; set; }
+    public string Model2 { get; set; }
+
     const float margin = 25;
     Notakto notakto = null;
+    bool model1Plays = true;
 
     protected override void OnStart(IGraphics g)
     {
@@ -58,11 +68,24 @@ public class NotaktoView : View
         });
     }
 
+    protected override void OnFrame(IGraphics g)
+    {
+        play(
+            model1Plays ? Model1 : Model2,
+            model1Plays ? Model2 : Model1
+        );
+    }
+
     protected override void OnRender(IGraphics g)
     {
         g.Clear(Color.Black);
         if (notakto is null)
             return;
+        
+        g.DrawText(new RectangleF(0, 0, 100, 100), 
+            model1Plays ? Brushes.Blue : Brushes.Green,
+            model1Plays ? Model1 : Model2
+        );
         
         var layoutData = calcLines(
             g.Width, g.Height, notakto.TableCount
@@ -187,6 +210,25 @@ public class NotaktoView : View
             else return (lineCount - 1, bestSize);
         }
         return (board - 1, bestSize);
+    }
+
+    private bool play(string file, string other)
+    {
+        if (!File.Exists(file))
+            return false;
+        
+        var content = File.ReadAllText(file);
+        var data = content
+            .Split(' ')
+            .Select(int.Parse)
+            .ToArray();
+        
+        notakto.Tables[data[0]][data[1]] = true;
+        File.Delete(file);
+        File.WriteAllText(other.Replace(".txt", " last.txt"), content);
+        model1Plays = !model1Plays;
+        Invalidate();
+        return true;
     }
 
     private void start(int level)
