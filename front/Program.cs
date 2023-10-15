@@ -238,7 +238,7 @@ public class NotaktoView : View
             1 => new Notakto(2),
             2 => new Notakto(6),
             3 => new Notakto(24),
-            4 => new Notakto(96),
+            4 => new Notakto(72),
             _ => null
         };
     }
